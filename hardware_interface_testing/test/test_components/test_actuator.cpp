@@ -74,7 +74,7 @@ class TestActuator : public ActuatorInterface
         &velocity_state_));
     state_interfaces.emplace_back(
       hardware_interface::StateInterface(
-        get_hardware_info().joints[0].name, "some_unlisted_interface", nullptr));
+        get_hardware_info().joints[0].name, "some_unlisted_interface", static_cast<double*>(nullptr)));
 
     return state_interfaces;
   }

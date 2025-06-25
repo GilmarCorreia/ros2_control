@@ -357,7 +357,7 @@ class ExternalComponent : public hardware_interface::ActuatorInterface
   {
     std::vector<hardware_interface::StateInterface> state_interfaces;
     state_interfaces.emplace_back(
-      hardware_interface::StateInterface("external_joint", "external_state_interface", nullptr));
+      hardware_interface::StateInterface("external_joint", "external_state_interface", static_cast<double*>(nullptr)));
 
     return state_interfaces;
   }
@@ -367,7 +367,7 @@ class ExternalComponent : public hardware_interface::ActuatorInterface
     std::vector<hardware_interface::CommandInterface> command_interfaces;
     command_interfaces.emplace_back(
       hardware_interface::CommandInterface(
-        "external_joint", "external_command_interface", nullptr));
+        "external_joint", "external_command_interface", static_cast<double*>(nullptr)));
 
     return command_interfaces;
   }

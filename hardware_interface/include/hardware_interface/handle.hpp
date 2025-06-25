@@ -49,7 +49,7 @@ std::string get_type_name()
 namespace hardware_interface
 {
 
-using HANDLE_DATATYPE = std::variant<std::monostate, double, bool>;
+using HANDLE_DATATYPE = std::variant<std::monostate, uint32_t, uint8_t, int, double, bool, std::string, std::vector<double>, std::vector<unsigned char>>;
 
 /// A handle used to get and set a value on a given interface.
 class Handle
@@ -57,6 +57,38 @@ class Handle
 public:
   [[deprecated("Use InterfaceDescription for initializing the Interface")]]
   Handle(const std::string & prefix_name, const std::string & interface_name, double * value_ptr)
+  : prefix_name_(prefix_name),
+    interface_name_(interface_name),
+    handle_name_(prefix_name_ + "/" + interface_name_),
+    value_ptr_(new HANDLE_DATATYPE(*value_ptr))
+  {
+  }
+
+  Handle(const std::string & prefix_name, const std::string & interface_name, int * value_ptr)
+  : prefix_name_(prefix_name),
+    interface_name_(interface_name),
+    handle_name_(prefix_name_ + "/" + interface_name_),
+    value_ptr_(new HANDLE_DATATYPE(*value_ptr))
+  {
+  }
+
+  Handle(const std::string & prefix_name, const std::string & interface_name, std::vector<double> * value_ptr)
+  : prefix_name_(prefix_name),
+    interface_name_(interface_name),
+    handle_name_(prefix_name_ + "/" + interface_name_),
+    value_ptr_(new HANDLE_DATATYPE(*value_ptr))
+  {
+  }
+
+  Handle(const std::string & prefix_name, const std::string & interface_name, std::vector<unsigned char> * value_ptr)
+  : prefix_name_(prefix_name),
+    interface_name_(interface_name),
+    handle_name_(prefix_name_ + "/" + interface_name_),
+    value_ptr_(new HANDLE_DATATYPE(*value_ptr))
+  {
+  }
+  
+  Handle(const std::string & prefix_name, const std::string & interface_name, HANDLE_DATATYPE * value_ptr)
   : prefix_name_(prefix_name),
     interface_name_(interface_name),
     handle_name_(prefix_name_ + "/" + interface_name_),
@@ -80,7 +112,7 @@ public:
       {
         value_ = initial_value.empty() ? std::numeric_limits<double>::quiet_NaN()
                                        : hardware_interface::stod(initial_value);
-        value_ptr_ = std::get_if<double>(&value_);
+        value_ptr_ = &value_;
       }
       catch (const std::invalid_argument & err)
       {
@@ -96,6 +128,21 @@ public:
       value_ptr_ = nullptr;
       value_ = initial_value.empty() ? false : hardware_interface::parse_bool(initial_value);
     }
+    // else if (data_type_ == hardware_interface::HandleDataType::STRING)
+    // {
+    //   value_ptr_ = nullptr;
+    //   value_ = initial_value;
+    // }
+    // else if (data_type_ == hardware_interface::HandleDataType::DOUBLE_ARRAY)
+    // {
+    //   value_ptr_ = nullptr;
+    //   value_ = initial_value.empty() ? std::vector<double>{} : std::vector<double>{};
+    // }
+    // else if (data_type_ == hardware_interface::HandleDataType::UCHAR_ARRAY)
+    // {
+    //   value_ptr_ = nullptr;
+    //   value_ = initial_value.empty() ? std::vector<unsigned char>{} : std::vector<unsigned char>{};
+    // }
     else
     {
       throw std::runtime_error(
@@ -178,7 +225,7 @@ public:
     // BEGIN (Handle export change): for backward compatibility
     // TODO(Manuel) return value_ if old functionality is removed
     THROW_ON_NULLPTR(value_ptr_);
-    return *value_ptr_;
+    return std::get<double>(value_);
     // END
   }
 
@@ -222,7 +269,7 @@ public:
     {
       // If the template is of type double, check if the value_ptr_ is not nullptr
       THROW_ON_NULLPTR(value_ptr_);
-      return *value_ptr_;
+      return std::get<double>(value_);
     }
     try
     {
@@ -364,7 +411,7 @@ private:
     }
     else
     {
-      value_ptr_ = std::get_if<double>(&value_);
+      value_ptr_ = &value_;
     }
   }
 
@@ -386,7 +433,7 @@ protected:
   HandleDataType data_type_ = HandleDataType::DOUBLE;
   // BEGIN (Handle export change): for backward compatibility
   // TODO(Manuel) redeclare as HANDLE_DATATYPE * value_ptr_ if old functionality is removed
-  double * value_ptr_;
+  HANDLE_DATATYPE * value_ptr_;
   // END
   mutable std::shared_mutex handle_mutex_;
 };
@@ -403,9 +450,9 @@ public:
   {
     if (value_ptr_ || std::holds_alternative<double>(value_))
     {
-      std::function<double()> f = [this]()
-      { return value_ptr_ ? *value_ptr_ : std::get<double>(value_); };
-      DEFAULT_REGISTER_ROS2_CONTROL_INTROSPECTION("state_interface." + get_name(), f);
+    //   std::function<double()> f = [this]()
+    //   { return value_ptr_ ? *value_ptr_ : std::get<double>(value_); };
+    //   DEFAULT_REGISTER_ROS2_CONTROL_INTROSPECTION("state_interface." + get_name(), f);
     }
   }
 
@@ -477,9 +524,9 @@ public:
   {
     if (value_ptr_ || std::holds_alternative<double>(value_))
     {
-      std::function<double()> f = [this]()
-      { return value_ptr_ ? *value_ptr_ : std::get<double>(value_); };
-      DEFAULT_REGISTER_ROS2_CONTROL_INTROSPECTION("command_interface." + get_name(), f);
+    //   std::function<double()> f = [this]()
+    //   { return value_ptr_ ? *value_ptr_ : std::get<double>(value_); };
+    //   DEFAULT_REGISTER_ROS2_CONTROL_INTROSPECTION("command_interface." + get_name(), f);
       DEFAULT_REGISTER_ROS2_CONTROL_INTROSPECTION(
         "command_interface." + get_name() + ".is_limited", &is_command_limited_);
     }
