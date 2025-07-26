@@ -28,6 +28,8 @@
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
 #include "hardware_interface/introspection.hpp"
+#include "hardware_interface/types/hardware_component_interface_params.hpp"
+#include "hardware_interface/types/hardware_component_params.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "hardware_interface/types/lifecycle_state_names.hpp"
 #include "hardware_interface/types/trigger_type.hpp"
@@ -138,12 +140,38 @@ public:
    * \returns CallbackReturn::SUCCESS if required data are provided and can be parsed.
    * \returns CallbackReturn::ERROR if any error happens or data are missing.
    */
+  [[deprecated(
+    "Replaced by CallbackReturn init(const hardware_interface::HardwareComponentParams & "
+    "params). Initialization is handled by the Framework.")]]
   CallbackReturn init(
     const HardwareInfo & hardware_info, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
   {
-    actuator_clock_ = clock;
-    actuator_logger_ = logger.get_child("hardware_component.actuator." + hardware_info.name);
-    info_ = hardware_info;
+    hardware_interface::HardwareComponentParams params;
+    params.hardware_info = hardware_info;
+    params.clock = clock;
+    params.logger = logger;
+    return init(params);
+  };
+
+  /// Initialization of the hardware interface from data parsed from the robot's URDF and also the
+  /// clock and logger interfaces.
+  /**
+   * \param[in] params  A struct of type HardwareComponentParams containing all necessary
+   * parameters for initializing this specific hardware component,
+   * including its HardwareInfo, a dedicated logger, a clock, and a
+   * weak_ptr to the executor.
+   * \warning The parsed executor should not be used to call `cancel()` or use blocking callbacks
+   * such as `spin()`.
+   * \returns CallbackReturn::SUCCESS if required data are provided and can be parsed.
+   * \returns CallbackReturn::ERROR if any error happens or data are missing.
+   */
+  CallbackReturn init(const hardware_interface::HardwareComponentParams & params)
+  {
+    actuator_clock_ = params.clock;
+    auto logger_copy = params.logger;
+    actuator_logger_ =
+      logger_copy.get_child("hardware_component.actuator." + params.hardware_info.name);
+    info_ = params.hardware_info;
     if (info_.is_async)
     {
       RCLCPP_INFO_STREAM(
@@ -175,7 +203,30 @@ public:
         info_.thread_priority);
       async_handler_->start_thread();
     }
-    return on_init(hardware_info);
+
+    if (auto locked_executor = params.executor.lock())
+    {
+      std::string node_name = params.hardware_info.name;
+      std::transform(
+        node_name.begin(), node_name.end(), node_name.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+      std::replace(node_name.begin(), node_name.end(), '/', '_');
+      hardware_component_node_ = std::make_shared<rclcpp::Node>(node_name);
+      locked_executor->add_node(hardware_component_node_->get_node_base_interface());
+    }
+    else
+    {
+      RCLCPP_WARN(
+        params.logger,
+        "Executor is not available during hardware component initialization for '%s'. Skipping "
+        "node creation!",
+        params.hardware_info.name.c_str());
+    }
+
+    hardware_interface::HardwareComponentInterfaceParams interface_params;
+    interface_params.hardware_info = info_;
+    interface_params.executor = params.executor;
+    return on_init(interface_params);
   };
 
   /// Initialization of the hardware interface from data parsed from the robot's URDF.
@@ -184,12 +235,33 @@ public:
    * \returns CallbackReturn::SUCCESS if required data are provided and can be parsed.
    * \returns CallbackReturn::ERROR if any error happens or data are missing.
    */
+  [[deprecated("Use on_init(const HardwareComponentInterfaceParams & params) instead.")]]
   virtual CallbackReturn on_init(const HardwareInfo & hardware_info)
   {
     info_ = hardware_info;
     parse_state_interface_descriptions(info_.joints, joint_state_interfaces_);
     parse_command_interface_descriptions(info_.joints, joint_command_interfaces_);
     return CallbackReturn::SUCCESS;
+  };
+
+  /// Initialization of the hardware interface from data parsed from the robot's URDF.
+  /**
+   * \param[in] params  A struct of type hardware_interface::HardwareComponentInterfaceParams
+   * containing all necessary parameters for initializing this specific hardware component,
+   * specifically its HardwareInfo, and a weak_ptr to the executor.
+   * \warning The parsed executor should not be used to call `cancel()` or use blocking callbacks
+   * such as `spin()`.
+   * \returns CallbackReturn::SUCCESS if required data are provided and can be parsed.
+   * \returns CallbackReturn::ERROR if any error happens or data are missing.
+   */
+  virtual CallbackReturn on_init(
+    const hardware_interface::HardwareComponentInterfaceParams & params)
+  {
+    // This is done for backward compatibility with the old on_init method.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    return on_init(params.hardware_info);
+#pragma GCC diagnostic pop
   };
 
   /// Exports all state interfaces for this hardware interface.
@@ -206,10 +278,8 @@ public:
    */
   [[deprecated(
     "Replaced by vector<StateInterface::ConstSharedPtr> on_export_state_interfaces() method. "
-    "Exporting is "
-    "handled "
-    "by the Framework.")]] virtual std::vector<StateInterface>
-  export_state_interfaces()
+    "Exporting is handled by the Framework.")]]
+  virtual std::vector<StateInterface> export_state_interfaces()
   {
     // return empty vector by default. For backward compatibility we try calling
     // export_state_interfaces() and only when empty vector is returned call
@@ -283,10 +353,8 @@ public:
    */
   [[deprecated(
     "Replaced by vector<CommandInterface::SharedPtr> on_export_command_interfaces() method. "
-    "Exporting is "
-    "handled "
-    "by the Framework.")]] virtual std::vector<CommandInterface>
-  export_command_interfaces()
+    "Exporting is handled by the Framework.")]]
+  virtual std::vector<CommandInterface> export_command_interfaces()
   {
     // return empty vector by default. For backward compatibility we try calling
     // export_command_interfaces() and only when empty vector is returned call
@@ -615,6 +683,12 @@ public:
    */
   rclcpp::Clock::SharedPtr get_clock() const { return actuator_clock_; }
 
+  /// Get the default node of the ActuatorInterface.
+  /**
+   * \return node of the ActuatorInterface.
+   */
+  rclcpp::Node::SharedPtr get_node() const { return hardware_component_node_; }
+
   /// Get the hardware info of the ActuatorInterface.
   /**
    * \return hardware info of the ActuatorInterface.
@@ -671,6 +745,7 @@ protected:
 private:
   rclcpp::Clock::SharedPtr actuator_clock_;
   rclcpp::Logger actuator_logger_;
+  rclcpp::Node::SharedPtr hardware_component_node_ = nullptr;
   // interface names to Handle accessed through getters/setters
   std::unordered_map<std::string, StateInterface::SharedPtr> actuator_states_;
   std::unordered_map<std::string, CommandInterface::SharedPtr> actuator_commands_;
