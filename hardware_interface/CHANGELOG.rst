@@ -2,6 +2,26 @@
 Changelog for package hardware_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.37.0 (2025-09-12)
+-------------------
+* Fix interface configuration docs (`#2537 <https://github.com/ros-controls/ros2_control/issues/2537>`_) (`#2538 <https://github.com/ros-controls/ros2_control/issues/2538>`_)
+* Publish controller manager statistics to better introspect the timings (backport `#2449 <https://github.com/ros-controls/ros2_control/issues/2449>`_) (`#2521 <https://github.com/ros-controls/ros2_control/issues/2521>`_)
+* Contributors: mergify[bot]
+
+4.36.0 (2025-08-26)
+-------------------
+* Start of Unification for `Sensor`, `Actuator`, and `System` into a Single Class (backport `#2451 <https://github.com/ros-controls/ros2_control/issues/2451>`_) (`#2460 <https://github.com/ros-controls/ros2_control/issues/2460>`_)
+* Unify `write` behavior between Actuator and System hardware interfaces (`#2453 <https://github.com/ros-controls/ros2_control/issues/2453>`_) (`#2457 <https://github.com/ros-controls/ros2_control/issues/2457>`_)
+* Fix docstring for hardware lifecycle (`#2429 <https://github.com/ros-controls/ros2_control/issues/2429>`_) (`#2430 <https://github.com/ros-controls/ros2_control/issues/2430>`_)
+* Contributors: mergify[bot]
+
+4.35.0 (2025-07-31)
+-------------------
+* Fix the joint limiter exception while configuring component (`#2416 <https://github.com/ros-controls/ros2_control/issues/2416>`_) (`#2417 <https://github.com/ros-controls/ros2_control/issues/2417>`_)
+* Fix the prepare_command_mode_switch behaviour when HW is INACTIVE (`#2347 <https://github.com/ros-controls/ros2_control/issues/2347>`_) (`#2418 <https://github.com/ros-controls/ros2_control/issues/2418>`_)
+* Addition of a Default Node for Hardware Component (`#2348 <https://github.com/ros-controls/ros2_control/issues/2348>`_) (`#2413 <https://github.com/ros-controls/ros2_control/issues/2413>`_)
+* Contributors: mergify[bot]
+
 4.34.0 (2025-07-21)
 -------------------
 * Cleanup old internal API (`#2346 <https://github.com/ros-controls/ros2_control/issues/2346>`_) (`#2358 <https://github.com/ros-controls/ros2_control/issues/2358>`_)
