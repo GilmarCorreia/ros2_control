@@ -2,6 +2,24 @@
 Changelog for package hardware_interface_testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.39.2 (2025-11-09)
+-------------------
+* Avoid deadlocks for failed command switching (`#2774 <https://github.com/ros-controls/ros2_control/issues/2774>`_) (`#2796 <https://github.com/ros-controls/ros2_control/issues/2796>`_)
+* Contributors: mergify[bot]
+
+4.39.1 (2025-11-03)
+-------------------
+
+4.39.0 (2025-10-27)
+-------------------
+
+4.38.0 (2025-10-03)
+-------------------
+* Add parameter to allow controllers with inactive hardware components (`#2501 <https://github.com/ros-controls/ros2_control/issues/2501>`_) (`#2584 <https://github.com/ros-controls/ros2_control/issues/2584>`_)
+* Fix exclusive hardware control mode switching on controller failed activation (`#1522 <https://github.com/ros-controls/ros2_control/issues/1522>`_) (`#2580 <https://github.com/ros-controls/ros2_control/issues/2580>`_)
+* Fix shadowed variables, redefinition and old-style casts (`#2569 <https://github.com/ros-controls/ros2_control/issues/2569>`_) (`#2570 <https://github.com/ros-controls/ros2_control/issues/2570>`_)
+* Contributors: mergify[bot]
+
 4.37.0 (2025-09-12)
 -------------------
 

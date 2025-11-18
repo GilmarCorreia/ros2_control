@@ -229,6 +229,7 @@ public:
     component_params.clock = rm_clock_;
     component_params.logger = rm_logger_;
     component_params.executor = params.executor;
+    component_params.node_namespace = params.node_namespace;
     RCLCPP_INFO(
       get_logger(), "Initialize hardware '%s' ", component_params.hardware_info.name.c_str());
 
@@ -1298,6 +1299,7 @@ public:
   rclcpp::Clock::SharedPtr rm_clock_;
   rclcpp::Logger rm_logger_;
   rclcpp::Executor::WeakPtr executor_;
+  std::string node_namespace_;
 
   std::vector<Actuator> actuators_;
   std::vector<Sensor> sensors_;
@@ -1390,6 +1392,22 @@ ResourceManager::ResourceManager(
   const hardware_interface::ResourceManagerParams & params, bool load)
 : resource_storage_(std::make_unique<ResourceStorage>(params.clock, params.logger))
 {
+  RCLCPP_WARN_EXPRESSION(
+    params.logger, params.allow_controller_activation_with_inactive_hardware,
+    "The parameter 'allow_controller_activation_with_inactive_hardware' is set to true. It is "
+    "recommended to use the settings to false in order to avoid controllers to use inactive "
+    "hardware components and to avoid any unexpected behavior. This feature might be removed in "
+    "future releases and will be defaulted to false.");
+  RCLCPP_WARN_EXPRESSION(
+    params.logger, !params.return_failed_hardware_names_on_return_deactivate_write_cycle_,
+    "The parameter 'deactivate_controllers_on_hardware_self_deactivate' is set to false. It is "
+    "recommended to use the settings to true in order to avoid controllers to use inactive "
+    "hardware components and to avoid any unexpected behavior. This feature might be removed in "
+    "future releases and will be defaulted to true.");
+  allow_controller_activation_with_inactive_hardware_ =
+    params.allow_controller_activation_with_inactive_hardware;
+  return_failed_hardware_names_on_return_deactivate_write_cycle_ =
+    params.return_failed_hardware_names_on_return_deactivate_write_cycle_;
   if (load)
   {
     load_and_initialize_components(params);
@@ -1463,6 +1481,7 @@ bool ResourceManager::load_and_initialize_components(
     interface_params.executor = resource_storage_->executor_;
     interface_params.clock = resource_storage_->rm_clock_;
     interface_params.logger = resource_storage_->rm_logger_;
+    interface_params.node_namespace = resource_storage_->node_namespace_;
 
     if (individual_hardware_info.type == actuator_type)
     {
@@ -1519,6 +1538,7 @@ bool ResourceManager::load_and_initialize_components(
   resource_storage_->robot_description_ = params.robot_description;
   resource_storage_->cm_update_rate_ = params.update_rate;
   resource_storage_->executor_ = params.executor;
+  resource_storage_->node_namespace_ = params.node_namespace;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   return load_and_initialize_components(params.robot_description, params.update_rate);
@@ -2014,7 +2034,9 @@ bool ResourceManager::prepare_command_mode_switch(
 
   const auto & hardware_info_map = resource_storage_->hardware_info_map_;
   auto call_prepare_mode_switch =
-    [&start_interfaces, &stop_interfaces, &hardware_info_map, logger = get_logger()](
+    [&start_interfaces, &stop_interfaces, &hardware_info_map, logger = get_logger(),
+     allow_controller_activation_with_inactive_hardware =
+       allow_controller_activation_with_inactive_hardware_](
       auto & components, auto & start_interfaces_buffer, auto & stop_interfaces_buffer)
   {
     bool ret = true;
@@ -2032,7 +2054,9 @@ bool ResourceManager::prepare_command_mode_switch(
       }
       if (
         !start_interfaces_buffer.empty() &&
-        component.get_lifecycle_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE)
+        component.get_lifecycle_state().id() ==
+          lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE &&
+        !allow_controller_activation_with_inactive_hardware)
       {
         RCLCPP_WARN(
           logger, "Component '%s' is in INACTIVE state, but has start interfaces to switch: \n%s",
@@ -2114,7 +2138,9 @@ bool ResourceManager::perform_command_mode_switch(
 
   const auto & hardware_info_map = resource_storage_->hardware_info_map_;
   auto call_perform_mode_switch =
-    [&start_interfaces, &stop_interfaces, &hardware_info_map, logger = get_logger()](
+    [&start_interfaces, &stop_interfaces, &hardware_info_map, logger = get_logger(),
+     allow_controller_activation_with_inactive_hardware =
+       allow_controller_activation_with_inactive_hardware_](
       auto & components, auto & start_interfaces_buffer, auto & stop_interfaces_buffer)
   {
     bool ret = true;
@@ -2132,7 +2158,9 @@ bool ResourceManager::perform_command_mode_switch(
       }
       if (
         !start_interfaces_buffer.empty() &&
-        component.get_lifecycle_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE)
+        component.get_lifecycle_state().id() ==
+          lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE &&
+        !allow_controller_activation_with_inactive_hardware)
       {
         RCLCPP_WARN(
           logger, "Component '%s' is in INACTIVE state, but has start interfaces to switch: \n%s",
@@ -2515,7 +2543,10 @@ HardwareReadWriteStatus ResourceManager::write(
           lifecycle_msgs::msg::State::PRIMARY_STATE_INACTIVE, lifecycle_state_names::INACTIVE);
         set_component_state(component_name, inactive_state);
         read_write_status.result = ret_val;
-        read_write_status.failed_hardware_names.push_back(component_name);
+        if (return_failed_hardware_names_on_return_deactivate_write_cycle_)
+        {
+          read_write_status.failed_hardware_names.push_back(component_name);
+        }
       }
     }
   };

@@ -30,6 +30,8 @@ For details see the controller_manager section.
 * The controllers can be easily introspect the internal member variables using the macro ``REGISTER_ROS2_CONTROL_INTROSPECTION`` (`#1918 <https://github.com/ros-controls/ros2_control/pull/1918>`_)
 * A new ``SemanticComponentCommandInterface`` semantic component provides capabilities analogous to the ``SemanticComponentInterface``, but for write-only devices (`#1945 <https://github.com/ros-controls/ros2_control/pull/1945>`_)
 * The new semantic command interface ``LedRgbDevice`` provides standard (command) interfaces for 3-channel LED devices (`#1945 <https://github.com/ros-controls/ros2_control/pull/1945>`_)
+* The new ``MagneticFieldSensor`` semantic component provides an interface for reading data from magnetometers. `(#2627 <https://github.com/ros-controls/ros2_control/pull/2627>`__)
+* The controller_manager will now deactivate the entire controller chain if a controller in the chain fails during the update cycle. `(#2681 <https://github.com/ros-controls/ros2_control/pull/2681>`__)
 
 controller_manager
 ******************
@@ -87,7 +89,7 @@ controller_manager
 * The ``ros2_control_node`` node has a new ``lock_memory`` parameter to lock memory at startup to physical RAM in order to avoid page faults (`#1822 <https://github.com/ros-controls/ros2_control/pull/1822>`_).
 * The ``ros2_control_node`` node has a new ``cpu_affinity`` parameter to bind the process to a specific CPU core. By default, this is not enabled. (`#1852 <https://github.com/ros-controls/ros2_control/pull/1852>`_).
 * The ``--service-call-timeout`` was added as parameter to the helper scripts ``spawner.py``. Useful when the CPU load is high at startup and the service call does not return immediately (`#1808 <https://github.com/ros-controls/ros2_control/pull/1808>`_).
-* The ``cpu_affinity`` parameter can now accept of types ``int`` or ``int_array`` to bind the process to a specific CPU core or multiple CPU cores. (`#1915 <https://github.com/ros-controls/ros2_control/pull/1915>`_).
+* The ``cpu_affinity`` parameter can now be of type ``int`` or ``int_array`` to bind the process to a specific CPU core or multiple CPU cores. (`#1915 <https://github.com/ros-controls/ros2_control/pull/1915>`_).
 * The ``pal_statistics`` is now integrated into the controller_manager, so that the controllers, hardware components and the controller_manager can be easily introspected and monitored using the topics ``~/introspection_data/names`` and ``~/introspection_data/values`` (`#1918 <https://github.com/ros-controls/ros2_control/pull/1918>`_).
 * A python module ``test_utils`` was added to the ``controller_manager`` package to help with integration testing (`#1955 <https://github.com/ros-controls/ros2_control/pull/1955>`_).
 * A new parameter ``enforce_command_limits`` is introduced to be able to enable and disable the enforcement of the command limits (`#1989 <https://github.com/ros-controls/ros2_control/pull/1989>`_).
@@ -96,7 +98,11 @@ controller_manager
 * The default strictness of the ``switch_controllers`` can now we be chosen using ROS 2 parameters. The default behaviour is still left to ``BEST_EFFORT`` (`#2168 <https://github.com/ros-controls/ros2_control/pull/2168>`_).
 * Parameter ``shutdown_on_initial_state_failure`` was added to avoid shutting down on hardware initial state failure  (`#2230 <https://github.com/ros-controls/ros2_control/pull/2230>`_).
 * The controller manager now publishes ``~/statistics/names`` and ``~/statistics/values`` topics to introspect the execution time and periodicity of the different entities running in the realtime loop (`#2449 <https://github.com/ros-controls/ros2_control/pull/2449>`_).
+* The controller manager now supports switching (activating and deactivating) controllers in both realtime and non-realtime modes. This is controlled by the parameter ``activate_asap`` of the ``switch_controllers`` service (`#2452 <https://github.com/ros-controls/ros2_control/pull/2452>`_).
+* The spawner now supports two new arguments ``--switch-asap`` and ``--no-switch-asap`` to control the behaviour of the spawner when switching controllers to be in realtime loop (or) non-realtime loop. By default, it is set to ``--switch-asap`` to keep the earlier behavior (`#2610 <https://github.com/ros-controls/ros2_control/pull/2610>`_).
 * New parameters ``overruns.manage`` and ``overruns.print_warnings`` were added to control the behavior of the controller manager/ros2_control_node when overruns occur (`#2546 <https://github.com/ros-controls/ros2_control/pull/2546/files>`_).
+* The ``bcolors`` class now respects the ``RCUTILS_COLORIZED_OUTPUT`` environment
+  variable to automatically disable colors in non-TTY and CI environments.
 
 hardware_interface
 ******************
@@ -181,6 +187,9 @@ hardware_interface
 
 * The ``prepare_command_mode_switch`` and ``perform_command_mode_switch`` methods will now only receive the start/stop interfaces that belong to the hardware component instead of everything (`#2120 <https://github.com/ros-controls/ros2_control/pull/2120>`_)
 * The asynchronous components now support two scheduling policies: ``synchronized`` and ``detached`` and other properties to configure them (`#2477 <https://github.com/ros-controls/ros2_control/pull/2477>`_).
+* The hardware interface is now treated similarly as ERROR, when a hardware component returns ERROR on the read cycle (`#2334 <https://github.com/ros-controls/ros2_control/pull/2334>`_).
+* The controllers are now deactivated when a hardware component returns DEACTIVATE on the write cycle. The parameter ``deactivate_controllers_on_hardware_self_deactivate`` is added to control this behavior temporarily. It is recommended to set this parameter to true in order to avoid controllers to use inactive hardware components and to avoid any unexpected behavior. This feature parameter will be removed in future releases and will be defaulted to true (`#2334 <https://github.com/ros-controls/ros2_control/pull/2334>`_ & `#2501 <https://github.com/ros-controls/ros2_control/pull/2501>`_).
+* The controllers are not allowed to be activated when the hardware component is in INACTIVE state. The parameter ``allow_controller_activation_with_inactive_hardware`` is added to control this behavior temporarily. It is recommended to set this parameter to false in order to avoid controllers to use inactive hardware components and to avoid any unexpected behavior. This feature parameter will be removed in future releases and will be defaulted to false (`#2347 <https://github.com/ros-controls/ros2_control/pull/2347>`_).
 
 joint_limits
 ************
@@ -208,3 +217,7 @@ ros2controlcli
     ros2 control <verb> <arguments> --ros-args -r __ns:=<namespace>
 
 * The CLI verbs ``list_hardware_components`` and ``list_hardware_interfaces`` will now show the data type used by the internal Command and State interfaces (`#2204 <https://github.com/ros-controls/ros2_control/pull/2204>`_).
+
+transmission_interface
+**********************
+* The ``simple_transmission`` and ``differential_transmission`` now also support the ``force`` interface (`#2588 <https://github.com/ros-controls/ros2_control/pull/2588>`_).

@@ -2,6 +2,46 @@
 Changelog for package hardware_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.39.2 (2025-11-09)
+-------------------
+* Auto-set joint state interfaces to zero in MockHardware (`#2788 <https://github.com/ros-controls/ros2_control/issues/2788>`_) (`#2794 <https://github.com/ros-controls/ros2_control/issues/2794>`_)
+* Don't update MockComponent's state interfaces if command interfaces are not finite (`#2786 <https://github.com/ros-controls/ros2_control/issues/2786>`_) (`#2790 <https://github.com/ros-controls/ros2_control/issues/2790>`_)
+* Rename hardware descriptions (`#2787 <https://github.com/ros-controls/ros2_control/issues/2787>`_) (`#2792 <https://github.com/ros-controls/ros2_control/issues/2792>`_)
+* Contributors: mergify[bot]
+
+4.39.1 (2025-11-03)
+-------------------
+
+4.39.0 (2025-10-27)
+-------------------
+* Deactivate the controller chain upon failed group activation (`#2669 <https://github.com/ros-controls/ros2_control/issues/2669>`_) (`#2737 <https://github.com/ros-controls/ros2_control/issues/2737>`_)
+* Cleanup GenericSystem component code :broom:  (`#2706 <https://github.com/ros-controls/ros2_control/issues/2706>`_) (`#2714 <https://github.com/ros-controls/ros2_control/issues/2714>`_)
+* [GenericSystem] Initialize joint_control_mode\_ in on_configure (`#2693 <https://github.com/ros-controls/ros2_control/issues/2693>`_) (`#2695 <https://github.com/ros-controls/ros2_control/issues/2695>`_)
+* Fix dynamics calculation of GenericSystem component (`#2705 <https://github.com/ros-controls/ros2_control/issues/2705>`_) (`#2709 <https://github.com/ros-controls/ros2_control/issues/2709>`_)
+* Prepare GenericSystem for other interface data types (`#2571 <https://github.com/ros-controls/ros2_control/issues/2571>`_) (`#2708 <https://github.com/ros-controls/ros2_control/issues/2708>`_)
+* Add `has_state` and `has_command` methods to hardware_component_interface (`#2701 <https://github.com/ros-controls/ros2_control/issues/2701>`_) (`#2702 <https://github.com/ros-controls/ros2_control/issues/2702>`_)
+* Fix runtime variant access bug in `HardwareComponentInterface::get_command` helper method (`#2491 <https://github.com/ros-controls/ros2_control/issues/2491>`_) (`#2704 <https://github.com/ros-controls/ros2_control/issues/2704>`_)
+* Fix the same hardware component node naming issue with multiple controller managers setup (`#2657 <https://github.com/ros-controls/ros2_control/issues/2657>`_) (`#2666 <https://github.com/ros-controls/ros2_control/issues/2666>`_)
+* Enable logger service for hardware component node (`#2503 <https://github.com/ros-controls/ros2_control/issues/2503>`_) (`#2668 <https://github.com/ros-controls/ros2_control/issues/2668>`_)
+* Remove deprecation warning for kilted now (`#2645 <https://github.com/ros-controls/ros2_control/issues/2645>`_)
+* Add magnetic_field_sensor semantic component (`#2627 <https://github.com/ros-controls/ros2_control/issues/2627>`_) (`#2655 <https://github.com/ros-controls/ros2_control/issues/2655>`_)
+* Fix warnings of uninitialized registry in GenericSystem tests (`#2635 <https://github.com/ros-controls/ros2_control/issues/2635>`_) (`#2641 <https://github.com/ros-controls/ros2_control/issues/2641>`_)
+* Fix the variant access in the hardware component interface (`#2626 <https://github.com/ros-controls/ros2_control/issues/2626>`_)
+* Contributors: Christoph Fröhlich, Sai Kishor Kothakota, mergify[bot]
+
+4.38.0 (2025-10-03)
+-------------------
+* Ability to switch controllers in non-realtime loop (backport `#2452 <https://github.com/ros-controls/ros2_control/issues/2452>`_) (`#2610 <https://github.com/ros-controls/ros2_control/issues/2610>`_)
+* Add parameter to allow controllers with inactive hardware components (`#2501 <https://github.com/ros-controls/ros2_control/issues/2501>`_) (`#2584 <https://github.com/ros-controls/ros2_control/issues/2584>`_)
+* Add detach async policy for rate critical frameworks (backport `#2477 <https://github.com/ros-controls/ros2_control/issues/2477>`_) (`#2600 <https://github.com/ros-controls/ros2_control/issues/2600>`_)
+* Add `ControllerInterfaceParams` to initialize the Controllers (backport `#2390 <https://github.com/ros-controls/ros2_control/issues/2390>`_) (`#2601 <https://github.com/ros-controls/ros2_control/issues/2601>`_)
+* Silence -Wdeprecated-declarations of legacy wrappers (`#2585 <https://github.com/ros-controls/ros2_control/issues/2585>`_)
+* Fix shadowed class member in GenericSystem (`#2561 <https://github.com/ros-controls/ros2_control/issues/2561>`_) (`#2565 <https://github.com/ros-controls/ros2_control/issues/2565>`_)
+* remove virtual from the add_measurement method (`#2558 <https://github.com/ros-controls/ros2_control/issues/2558>`_) (`#2562 <https://github.com/ros-controls/ros2_control/issues/2562>`_)
+* Fix the reloading controller with failed activation (`#2544 <https://github.com/ros-controls/ros2_control/issues/2544>`_) (`#2545 <https://github.com/ros-controls/ros2_control/issues/2545>`_)
+* Fix percentage calculation of Loaned*Interface warnings (`#2542 <https://github.com/ros-controls/ros2_control/issues/2542>`_) (`#2543 <https://github.com/ros-controls/ros2_control/issues/2543>`_)
+* Contributors: Christoph Fröhlich, mergify[bot]
+
 4.37.0 (2025-09-12)
 -------------------
 * Fix interface configuration docs (`#2537 <https://github.com/ros-controls/ros2_control/issues/2537>`_) (`#2538 <https://github.com/ros-controls/ros2_control/issues/2538>`_)
